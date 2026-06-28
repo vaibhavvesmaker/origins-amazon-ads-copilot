@@ -478,7 +478,7 @@ st.markdown(
     """
     <div class="hero">
       <h1>Origins Amazon Ads Optimization Copilot</h1>
-      <p>An interview-ready prototype that turns Amazon Ads CSV exports into ASIN, keyword, pacing, and bid recommendations — with Excel logic built into the workflow.</p>
+      <p>A prototype that turns Amazon Ads CSV exports into ASIN, keyword, pacing, and bid recommendations — with Excel logic built into the workflow.</p>
       <span class="pill">Retail Readiness</span>
       <span class="pill">ASIN-Level Growth</span>
       <span class="pill">Budget Pacing</span>
