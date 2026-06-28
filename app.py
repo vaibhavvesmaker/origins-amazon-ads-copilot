@@ -165,6 +165,12 @@ def money(x):
     return "${:,.0f}".format(float(x))
 
 
+def md_money(x):
+    """
+    Markdown-safe money formatter.
+    Streamlit markdown treats $ as math syntax, so we escape it.
+    """
+    return money(x).replace("$", "\\$")
 def pct(x):
     if pd.isna(x) or np.isinf(x):
         return "0.0%"
@@ -427,7 +433,7 @@ def executive_summary(campaign_summary, rec_df, target_acos):
         diagnosis = "Overall efficiency is within or near target, so the next priority is controlled scaling: protect strong campaigns and expand into high-intent search terms."
 
     return f"""
-**Executive readout:** The account generated **{money(sales)} in attributed sales** from **{money(spend)} in spend**, producing **ROAS of {roas:.2f}** and **ACOS of {pct(acos) if pd.notna(acos) else 'N/A'}**. 
+**Executive readout:** The account generated **{md_money(sales)} in attributed sales** from **{md_money(spend)} in spend**, producing **ROAS of {roas:.2f}** and **ACOS of {pct(acos) if pd.notna(acos) else 'N/A'}**.  
 CTR is **{pct(ctr)}** and CVR is **{pct(cvr)}**, which helps separate traffic quality from detail-page conversion.
 
 **Top sales driver:** {top_campaign}
