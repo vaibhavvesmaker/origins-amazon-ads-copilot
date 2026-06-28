@@ -25,6 +25,38 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    /* Better tab visibility */
+button[data-baseweb="tab"] {
+    color: #214336 !important;
+    background: rgba(255,255,255,.62) !important;
+    border-radius: 999px !important;
+    padding: 8px 14px !important;
+    margin-right: 6px !important;
+    border: 1px solid rgba(33,67,54,.12) !important;
+}
+
+button[data-baseweb="tab"] p {
+    color: #214336 !important;
+    font-weight: 650 !important;
+}
+
+button[data-baseweb="tab"][aria-selected="true"] {
+    background: #214336 !important;
+    border: 1px solid #214336 !important;
+}
+
+button[data-baseweb="tab"][aria-selected="true"] p {
+    color: #F7F1E7 !important;
+}
+
+div[data-testid="stFileUploader"] label p {
+    color: #214336 !important;
+    font-weight: 650 !important;
+}
+
+div[data-testid="stExpander"] p {
+    color: #25322E;
+}
         :root {
             --forest: #214336;
             --sage: #8FAF8A;
@@ -432,8 +464,12 @@ min_clicks = st.sidebar.number_input("Minimum clicks for decisioning", min_value
 max_bid_change = st.sidebar.slider("Safety cap: max bid change", min_value=0.05, max_value=0.30, value=0.15, step=0.01)
 
 st.sidebar.markdown("---")
+st.sidebar.markdown("### What these controls affect")
+st.sidebar.caption(
+    "These controls do not change sales/spend totals. They change the recommendation logic: "
+    "what gets flagged as waste, what qualifies for bid-up, bid-down, negative keyword, or PDP review."
+)
 st.sidebar.caption("Safety mode is always ON: recommendations are dry-run only.")
-
 
 # --------------------------
 # Hero
@@ -500,7 +536,15 @@ rec_df = generate_recommendations(
     min_clicks=min_clicks,
     max_bid_change=max_bid_change
 )
+high_actions = int((rec_df["priority"] == "High").sum()) if len(rec_df) else 0
+growth_actions = int((rec_df["priority"] == "Growth").sum()) if len(rec_df) else 0
+content_actions = int((rec_df["priority"] == "Content").sum()) if len(rec_df) else 0
 
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Recommendation impact")
+st.sidebar.metric("High-priority actions", high_actions)
+st.sidebar.metric("Growth opportunities", growth_actions)
+st.sidebar.metric("PDP/content reviews", content_actions)
 # --------------------------
 # Top KPIs
 # --------------------------
@@ -533,7 +577,16 @@ for col, label, value, note in [
             """,
             unsafe_allow_html=True
         )
-
+st.markdown(
+    """
+    <div class="callout">
+      <strong>How to use this:</strong> The KPI cards show actual uploaded/sample performance.
+      The sidebar controls adjust the decision rules used to generate recommendations.
+      For example, lowering the target ACOS will flag more campaigns for bid-down or budget review.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 # --------------------------
 # Tabs
 # --------------------------
