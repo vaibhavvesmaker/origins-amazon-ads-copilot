@@ -1,0 +1,13 @@
+campaign,search_term,keyword,match_type,asin,impressions,clicks,spend,sales,orders,current_bid
+Origins_GinZing_Branded_SP,origins ginzing eye cream,origins ginzing,exact,B0SAMPLE01,72000,3100,1850,14200,430,1.35
+Origins_GinZing_Branded_SP,origins eye cream,origins eye cream,phrase,B0SAMPLE01,56000,1700,1200,6800,190,1.1
+Origins_GinZing_NonBrand_SP,brightening eye cream,brightening eye cream,phrase,B0SAMPLE01,90000,1400,2200,5200,120,1.85
+Origins_GinZing_NonBrand_SP,dark circle eye cream,dark circle eye cream,broad,B0SAMPLE01,78000,1100,1650,2600,52,1.7
+Origins_GinZing_NonBrand_SP,cheap eye serum,eye cream,broad,B0SAMPLE01,38000,330,520,0,0,1.4
+Origins_MegaMushroom_NonBrand_SP,mushroom skincare,mushroom skincare,phrase,B0SAMPLE02,64000,980,1200,4400,88,1.25
+Origins_MegaMushroom_NonBrand_SP,redness relief moisturizer,redness relief moisturizer,broad,B0SAMPLE02,52000,600,1100,900,18,1.45
+Origins_MegaMushroom_NonBrand_SP,eczema steroid cream,sensitive skin cream,broad,B0SAMPLE02,29000,210,360,0,0,1.2
+Origins_DrinkUp_Mask_SB,overnight hydrating mask,overnight mask,phrase,B0SAMPLE03,77000,1250,1500,7200,170,1.1
+Origins_DrinkUp_Mask_SB,avocado face mask,face mask,broad,B0SAMPLE03,41000,440,680,1700,35,1.0
+Origins_Competitor_Targeting_SD,competitor moisturizer page,product targeting,asin,B0SAMPLE04,68000,700,1450,1500,24,1.35
+Origins_Retargeting_DSP,retargeting viewed asin,audience retargeting,audience,B0SAMPLE04,140000,1300,2100,12400,250,0.0
