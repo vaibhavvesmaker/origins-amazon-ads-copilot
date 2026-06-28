@@ -136,6 +136,16 @@ div[data-testid="stExpander"] p {
             font-weight: 740;
             margin: 28px 0 10px 0;
         }
+        [data-testid="stDataFrame"] {
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(33,67,54,.12) !important;
+    box-shadow: 0 8px 18px rgba(33,67,54,.06) !important;
+}
+
+[data-testid="stDataFrame"] * {
+    font-size: 13px !important;
+}
         .callout {
             padding: 16px 18px;
             border-left: 5px solid #C96F4A;
@@ -150,6 +160,7 @@ div[data-testid="stExpander"] p {
             color: #6c746f;
             font-size: 13px;
         }
+        
     </style>
     """,
     unsafe_allow_html=True
@@ -263,7 +274,54 @@ def add_kpis(df: pd.DataFrame) -> pd.DataFrame:
     df["roas"] = np.where(df["spend"] > 0, df["sales"] / df["spend"], 0)
     return df
 
+ORIGINS_GREEN = "#214336"
+ORIGINS_SAGE = "#8FAF8A"
+ORIGINS_CREAM = "#FBF7EF"
+ORIGINS_CARD = "#FFFDF7"
+ORIGINS_CLAY = "#C96F4A"
+ORIGINS_GRID = "#D8D2C5"
+ORIGINS_TEXT = "#25322E"
 
+
+def style_plotly_chart(fig, height=460):
+    fig.update_layout(
+        height=height,
+        paper_bgcolor=ORIGINS_CARD,
+        plot_bgcolor=ORIGINS_CARD,
+        font=dict(color=ORIGINS_TEXT, size=13),
+        title=dict(
+            font=dict(color=ORIGINS_GREEN, size=18),
+            x=0.02,
+            xanchor="left"
+        ),
+        margin=dict(l=40, r=35, t=70, b=55),
+        legend=dict(
+            font=dict(color=ORIGINS_TEXT),
+            bgcolor="rgba(255,255,255,0)"
+        ),
+        coloraxis_colorbar=dict(
+            tickfont=dict(color=ORIGINS_TEXT),
+            titlefont=dict(color=ORIGINS_TEXT)
+        )
+    )
+
+    fig.update_xaxes(
+        title_font=dict(color=ORIGINS_TEXT),
+        tickfont=dict(color=ORIGINS_TEXT),
+        gridcolor=ORIGINS_GRID,
+        zerolinecolor=ORIGINS_GRID,
+        linecolor=ORIGINS_GRID
+    )
+
+    fig.update_yaxes(
+        title_font=dict(color=ORIGINS_TEXT),
+        tickfont=dict(color=ORIGINS_TEXT),
+        gridcolor=ORIGINS_GRID,
+        zerolinecolor=ORIGINS_GRID,
+        linecolor=ORIGINS_GRID
+    )
+
+    return fig
 def load_csv(uploaded_file, fallback_path):
     if uploaded_file:
         return normalize_columns(pd.read_csv(uploaded_file))
@@ -463,8 +521,19 @@ st.sidebar.markdown("---")
 
 use_sample = st.sidebar.toggle("Use sample Origins-style data", value=True)
 
-target_acos = st.sidebar.slider("Target ACOS", min_value=0.05, max_value=0.80, value=0.35, step=0.01)
-target_roas = st.sidebar.slider("Target ROAS", min_value=1.0, max_value=10.0, value=3.0, step=0.25)
+target_acos = st.sidebar.slider(
+    "Target ACOS",
+    min_value=0.05,
+    max_value=0.80,
+    value=0.35,
+    step=0.01,
+    format="%.2f"
+)
+
+target_roas = 1 / target_acos if target_acos > 0 else 0
+
+st.sidebar.metric("Implied Target ROAS", f"{target_roas:.2f}")
+st.sidebar.caption("ROAS is automatically calculated from ACOS so the business rules stay consistent.")
 min_spend = st.sidebar.number_input("Waste threshold: minimum spend", min_value=0.0, value=50.0, step=10.0)
 min_clicks = st.sidebar.number_input("Minimum clicks for decisioning", min_value=1, value=20, step=1)
 max_bid_change = st.sidebar.slider("Safety cap: max bid change", min_value=0.05, max_value=0.30, value=0.15, step=0.01)
@@ -542,6 +611,32 @@ rec_df = generate_recommendations(
     min_clicks=min_clicks,
     max_bid_change=max_bid_change
 )
+high_actions = int((rec_df["priority"] == "High").sum()) if len(rec_df) else 0
+medium_actions = int((rec_df["priority"] == "Medium").sum()) if len(rec_df) else 0
+growth_actions = int((rec_df["priority"] == "Growth").sum()) if len(rec_df) else 0
+content_actions = int((rec_df["priority"] == "Content").sum()) if len(rec_df) else 0
+
+waste_recs = rec_df[rec_df["action_type"].isin(["Add Negative Exact", "Budget Reallocation"])] if len(rec_df) else rec_df
+flagged_spend = 0
+
+if len(search_df):
+    flagged_terms = search_df[
+        (search_df["spend"] >= min_spend) &
+        (
+            (search_df["orders"] == 0) |
+            ((search_df["acos"] > target_acos) & (search_df["sales"] > 0))
+        )
+    ]
+    flagged_spend = flagged_terms["spend"].sum()
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Dry-run impact")
+st.sidebar.metric("High-priority actions", high_actions)
+st.sidebar.metric("Bid-down actions", medium_actions)
+st.sidebar.metric("Growth opportunities", growth_actions)
+st.sidebar.metric("PDP/content reviews", content_actions)
+st.sidebar.metric("Flagged spend", f"${flagged_spend:,.0f}")
+
 high_actions = int((rec_df["priority"] == "High").sum()) if len(rec_df) else 0
 growth_actions = int((rec_df["priority"] == "Growth").sum()) if len(rec_df) else 0
 content_actions = int((rec_df["priority"] == "Content").sum()) if len(rec_df) else 0
@@ -644,8 +739,8 @@ with tab2:
             color="roas",
             color_continuous_scale=["#C96F4A", "#8FAF8A", "#214336"]
         )
-        chart.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=480)
-        st.plotly_chart(chart, use_container_width=True)
+        chart = style_plotly_chart(chart, height=480)
+        st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
 
     c3, c4 = st.columns(2)
     with c3:
@@ -659,8 +754,8 @@ with tab2:
             title="CTR vs CVR: traffic quality vs conversion",
             color_continuous_scale=["#C96F4A", "#8FAF8A", "#214336"]
         )
-        chart.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(chart, use_container_width=True)
+        chart = style_plotly_chart(chart, height=480)
+        st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
     with c4:
         chart = px.bar(
             campaign_summary.sort_values("acos", ascending=False),
@@ -671,8 +766,8 @@ with tab2:
             color_continuous_scale=["#8FAF8A", "#C96F4A"]
         )
         chart.add_hline(y=target_acos, line_dash="dash", annotation_text="Target ACOS")
-        chart.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", xaxis_tickangle=-35)
-        st.plotly_chart(chart, use_container_width=True)
+        chart = style_plotly_chart(chart, height=480)
+        st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
 
 with tab3:
     st.markdown('<div class="section-title">ASIN-level growth view</div>', unsafe_allow_html=True)
@@ -680,7 +775,20 @@ with tab3:
         st.warning("No ASIN-level file detected. Upload an advertised product report or use sample data.")
     else:
         asin_display = asin_summary.sort_values("sales", ascending=False)
-        st.dataframe(asin_display, use_container_width=True, hide_index=True)
+        st.dataframe(
+    asin_display,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        "spend": st.column_config.NumberColumn("Spend", format="$%.0f"),
+        "sales": st.column_config.NumberColumn("Sales", format="$%.0f"),
+        "ctr": st.column_config.NumberColumn("CTR", format="%.2%"),
+        "cpc": st.column_config.NumberColumn("CPC", format="$%.2f"),
+        "cvr": st.column_config.NumberColumn("CVR", format="%.2%"),
+        "acos": st.column_config.NumberColumn("ACOS", format="%.1%"),
+        "roas": st.column_config.NumberColumn("ROAS", format="%.2f"),
+    }
+)
 
         chart = px.scatter(
             asin_display,
@@ -693,8 +801,11 @@ with tab3:
             color_continuous_scale=["#8FAF8A", "#C96F4A"]
         )
         chart.add_vline(x=target_roas, line_dash="dash", annotation_text="Target ROAS")
-        chart.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=520)
-        st.plotly_chart(chart, use_container_width=True)
+        max_roas_value = max(float(asin_display["roas"].max()), float(target_roas))
+        chart.update_xaxes(range=[0, max_roas_value * 1.15])
+        chart = style_plotly_chart(chart, height=540)
+        st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
+
 
         st.markdown(
             """
@@ -725,7 +836,7 @@ with tab5:
     st.markdown('<div class="section-title">Excel logic translated into a repeatable workflow</div>', unsafe_allow_html=True)
     st.markdown(
         """
-        This prototype deliberately uses the same logic hiring managers ask about in Excel interviews, but makes it repeatable:
+        This prototype deliberately uses the same logic I'd assume you'd ask about in Excel interviews, but makes it repeatable:
 
         - **Pivot Tables →** `pandas.groupby()` / `pivot_table()` for campaign and ASIN summaries  
         - **VLOOKUP / XLOOKUP →** `merge()` to join ASIN metadata, product names, campaign files, and search terms  
