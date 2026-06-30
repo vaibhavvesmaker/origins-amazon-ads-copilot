@@ -294,14 +294,10 @@ def style_plotly_chart(fig, height=460):
             x=0.02,
             xanchor="left"
         ),
-        margin=dict(l=40, r=35, t=70, b=55),
+        margin=dict(l=55, r=45, t=70, b=65),
         legend=dict(
             font=dict(color=ORIGINS_TEXT),
             bgcolor="rgba(255,255,255,0)"
-        ),
-        coloraxis_colorbar=dict(
-            tickfont=dict(color=ORIGINS_TEXT),
-            titlefont=dict(color=ORIGINS_TEXT)
         )
     )
 
@@ -320,6 +316,17 @@ def style_plotly_chart(fig, height=460):
         zerolinecolor=ORIGINS_GRID,
         linecolor=ORIGINS_GRID
     )
+
+    # Safe colorbar styling for charts that use a color scale
+    try:
+        fig.update_coloraxes(
+            colorbar=dict(
+                tickfont=dict(color=ORIGINS_TEXT),
+                title=dict(font=dict(color=ORIGINS_TEXT))
+            )
+        )
+    except Exception:
+        pass
 
     return fig
 def load_csv(uploaded_file, fallback_path):
